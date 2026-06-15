@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>数学学情反馈助手 3.0</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f4f4f2;color:#222;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+.app{width:min(980px,calc(100% - 24px));margin:18px auto 42px}
+.header{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:14px}
+h1{font-size:25px;margin:0 0 6px}
+p{margin:0;color:#666;line-height:1.6;font-size:14px}
+.card{background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 8px 22px rgba(0,0,0,.07)}
+.grid{display:grid;gap:12px}
+.two{grid-template-columns:1fr 1fr}
+label{display:block;font-weight:650;font-size:14px;margin:13px 0 6px}
+input,textarea{width:100%;border:1px solid #ccc;border-radius:10px;padding:11px 12px;font-size:15px;line-height:1.5;background:white;outline:none}
+textarea{min-height:76px;resize:vertical}
+input:focus,textarea:focus{border-color:#222}
+.group-title{font-weight:700;margin:16px 0 8px}
+.checks{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.checks label{margin:0;border:1px solid #ddd;border-radius:10px;padding:10px 10px;font-weight:400;background:#fafafa;display:flex;gap:8px;align-items:center}
+.checks input{width:auto}
+.actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+button{border:0;border-radius:10px;background:#222;color:white;padding:12px 18px;font-size:15px;cursor:pointer}
+button.secondary{background:#666}
+button.ghost{background:white;color:#222;border:1px solid #ddd}
+button:hover{opacity:.9}
+#output{margin-top:12px;white-space:pre-wrap;min-height:260px;line-height:1.85;background:#fafafa;border:1px solid #ddd;border-radius:12px;padding:16px;font-size:15px}
+.result-top{display:flex;justify-content:space-between;gap:12px;align-items:center}
+h2{font-size:20px;margin:0}
+#status{font-size:13px;color:#666}
+.small{font-size:13px;color:#777;margin-top:8px;line-height:1.6}
+@media(max-width:760px){
+.app{width:calc(100% - 20px);margin-top:12px}
+.header{flex-direction:column}
+.two,.checks{grid-template-columns:1fr}
+.card{padding:16px}
+button{width:100%}
+.actions{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="header">
+    <div>
+      <h1>数学学情反馈助手 3.0</h1>
+      <p>按你的真实反馈风格重做：知识点 → 问题 → 课堂措施 → 课后要求。适合直接发给家长。</p>
+    </div>
+    <button class="ghost" onclick="clearForm()">清空</button>
+  </section>
+
+  <section class="card">
+    <div class="grid two">
+      <div>
+        <label>日期</label>
+        <input id="date" placeholder="例如：6月13日">
+      </div>
+      <div>
+        <label>学生姓名</label>
+        <input id="name" placeholder="例如：张修正">
+      </div>
+    </div>
+
+    <label>主讲知识点</label>
+    <textarea id="content" placeholder="例如：分布列与二项式；平面向量知识点复习；统计与概率"></textarea>
+
+    <div class="group-title">存在问题（多选）</div>
+    <div class="checks" id="problems">
+      <label><input type="checkbox" value="知识点遗忘较多">知识点遗忘较多</label>
+      <label><input type="checkbox" value="公式掌握不牢">公式掌握不牢</label>
+      <label><input type="checkbox" value="基础概念不扎实">基础概念不扎实</label>
+      <label><input type="checkbox" value="计算能力较弱">计算能力较弱</label>
+      <label><input type="checkbox" value="题型不熟练">题型不熟练</label>
+      <label><input type="checkbox" value="审题不够仔细">审题不够仔细</label>
+      <label><input type="checkbox" value="粗心失分">粗心失分</label>
+      <label><input type="checkbox" value="在校学习效率有待提升">在校学习效率有待提升</label>
+    </div>
+
+    <div class="group-title">课堂措施（多选）</div>
+    <div class="checks" id="measures">
+      <label><input type="checkbox" value="知识点梳理">知识点梳理</label>
+      <label><input type="checkbox" value="查漏补缺">查漏补缺</label>
+      <label><input type="checkbox" value="笔记整理">笔记整理</label>
+      <label><input type="checkbox" value="典型题训练">典型题训练</label>
+      <label><input type="checkbox" value="专项训练">专项训练</label>
+      <label><input type="checkbox" value="错题分析">错题分析</label>
+      <label><input type="checkbox" value="易错点总结">易错点总结</label>
+      <label><input type="checkbox" value="重点题型讲解">重点题型讲解</label>
+    </div>
+
+    <div class="group-title">课后要求（多选）</div>
+    <div class="checks" id="requirements">
+      <label><input type="checkbox" value="复习课堂笔记">复习课堂笔记</label>
+      <label><input type="checkbox" value="完成课后题单">完成课后题单</label>
+      <label><input type="checkbox" value="整理错题">整理错题</label>
+      <label><input type="checkbox" value="记忆公式">记忆公式</label>
+      <label><input type="checkbox" value="回顾典型题">回顾典型题</label>
+      <label><input type="checkbox" value="二次复习">二次复习</label>
+      <label><input type="checkbox" value="巩固重点题型">巩固重点题型</label>
+      <label><input type="checkbox" value="加强计算训练">加强计算训练</label>
+    </div>
+
+    <label>补充说明（可不填）</label>
+    <textarea id="note" placeholder="例如：这部分内容重在理解题意、理清逻辑；相关知识点已整理在笔记本上"></textarea>
+
+    <label>课后作业</label>
+    <textarea id="homework" placeholder="例如：课后题单"></textarea>
+
+    <div class="actions">
+      <button onclick="generate()">生成反馈</button>
+      <button class="secondary" onclick="copyText()">复制反馈</button>
+    </div>
+    <div class="small">建议：每次发给家长前读一遍，把不符合真实课堂的句子删掉。</div>
+  </section>
+
+  <section class="card">
+    <div class="result-top">
+      <h2>生成结果</h2>
+      <span id="status"></span>
+    </div>
+    <div id="output"></div>
+  </section>
+</main>
+
+<script>
+function $(id){return document.getElementById(id)}
+function today(){const d=new Date();return `${d.getMonth()+1}月${d.getDate()}日`}
+function val(id){return ($(id).value||"").trim()}
+function splitItems(s){return (s||"").split(/[\n；;]+/).map(x=>x.trim()).filter(Boolean)}
+function checked(id){return Array.from($(id).querySelectorAll("input:checked")).map(x=>x.value)}
+function list(items,fallback){const arr=items.length?items:fallback;return arr.map((x,i)=>`${i+1}. ${x.replace(/^\d+[\.、]\s*/,"")}`).join("\n")}
+function count(s){return (s||"").replace(/\s/g,"").length}
+function phrase(arr){return arr.length?arr.join("、"):"本节课相关数学内容"}
+
+function problemText(arr){
+  if(!arr.length) return "课堂中结合孩子的实际掌握情况进行了查漏补缺。"
+  let parts=[]
+  if(arr.includes("知识点遗忘较多")) parts.push("对前期学过的部分知识点遗忘较多")
+  if(arr.includes("公式掌握不牢")) parts.push("相关公式掌握不够扎实")
+  if(arr.includes("基础概念不扎实")) parts.push("基础概念理解还需要进一步巩固")
+  if(arr.includes("计算能力较弱")) parts.push("计算过程中的细节处理还需要加强")
+  if(arr.includes("题型不熟练")) parts.push("对部分题型的解题思路还不够熟练")
+  if(arr.includes("审题不够仔细")) parts.push("审题时对条件的提取还不够细致")
+  if(arr.includes("粗心失分")) parts.push("做题中存在一些粗心失分的情况")
+  if(arr.includes("在校学习效率有待提升")) parts.push("也反映出在校学习效率还有提升空间")
+  return "课堂上发现孩子" + parts.join("，") + "。"
+}
+function measureText(arr){
+  if(!arr.length) return "课堂中先带领孩子梳理相关知识点，再结合题目进行巩固。"
+  let map={
+    "知识点梳理":"梳理核心知识点",
+    "查漏补缺":"进行查漏补缺",
+    "笔记整理":"整理课堂笔记",
+    "典型题训练":"结合典型题进行训练",
+    "专项训练":"安排专项练习",
+    "错题分析":"分析易错题目",
+    "易错点总结":"总结易错点",
+    "重点题型讲解":"讲解重点题型"
+  }
+  let text=arr.map(x=>map[x]||x).join("，")
+  return "针对这些问题，本节课主要带领孩子" + text + "，帮助孩子进一步理解和巩固相关内容。"
+}
+function requireText(arr){
+  if(!arr.length) return "希望孩子课后及时复习课堂内容，并完成对应练习。"
+  let map={
+    "复习课堂笔记":"及时复习课堂笔记",
+    "完成课后题单":"完成课后题单",
+    "整理错题":"整理错题",
+    "记忆公式":"记忆相关公式",
+    "回顾典型题":"回顾典型题",
+    "二次复习":"进行二次复习",
+    "巩固重点题型":"巩固重点题型",
+    "加强计算训练":"加强计算训练"
+  }
+  let text=arr.map(x=>map[x]||x).join("，")
+  return "后续希望孩子课后" + text + "，多回顾多巩固，避免知识点再次遗忘。"
+}
+function feedback(){
+  const content=splitItems(val("content"))
+  const problems=checked("problems")
+  const measures=checked("measures")
+  const reqs=checked("requirements")
+  const note=val("note").replace(/[。.]$/,"")
+  let text=`本节课围绕${phrase(content)}相关内容展开复习与巩固。`
+  text+=problemText(problems)
+  text+=measureText(measures)
+  if(note) text+=note+"。"
+  text+=requireText(reqs)
+
+  if(count(text)>220){
+    text=`本节课围绕${phrase(content)}相关内容展开复习与巩固。`
+    text+=problemText(problems)
+    text+=measureText(measures)
+    text+=requireText(reqs)
+  }
+  if(count(text)>220){
+    text=`本节课围绕${phrase(content)}展开复习与巩固。课堂上结合孩子的掌握情况进行了知识点梳理和典型题训练，帮助孩子查漏补缺。后续希望孩子及时复习课堂笔记，完成课后题单，多回顾多巩固，避免知识点快速遗忘。`
+  }
+  if(count(text)<150){
+    text+="后续课堂中也会继续结合相关题型进行检查和巩固，帮助孩子把知识点落实到具体解题过程中。"
+  }
+  return text
+}
+function generate(){
+  const date=val("date")||today()
+  const name=val("name")||"孩子"
+  const content=splitItems(val("content"))
+  const hw=splitItems(val("homework"))
+  const fb=feedback()
+  const result=`科目：数学
+日期：${date}
+姓名：${name}
+
+【主讲内容】
+${list(content,["本节课相关数学知识点"])}
+
+【学情反馈】
+${fb}
+
+【课后作业】
+${list(hw,["课后题单"])}`
+  $("output").textContent=result
+  $("status").textContent=`反馈正文约${count(fb)}字`
+}
+function copyText(){
+  const text=$("output").textContent||""
+  if(!text.trim()){ $("status").textContent="请先生成反馈"; return }
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(()=>$("status").textContent="已复制").catch(()=>fallback(text))
+  }else fallback(text)
+}
+function fallback(text){
+  const t=document.createElement("textarea")
+  t.value=text;document.body.appendChild(t);t.select()
+  try{document.execCommand("copy");$("status").textContent="已复制"}catch(e){$("status").textContent="复制失败，请手动复制"}
+  document.body.removeChild(t)
+}
+function clearForm(){
+  ["name","content","note","homework"].forEach(id=>$(id).value="")
+  $("date").value=today()
+  document.querySelectorAll("input[type=checkbox]").forEach(x=>x.checked=false)
+  $("output").textContent=""
+  $("status").textContent=""
+}
+document.addEventListener("DOMContentLoaded",()=>{$("date").value=today()})
+</script>
+</body>
+</html>
