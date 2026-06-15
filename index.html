@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>数学学情反馈助手 4.0</title>
+<title>数学学情反馈助手 V5</title>
 <style>
 *{box-sizing:border-box}
 :root{
@@ -78,7 +78,7 @@ h2{font-size:20px;margin:0}
 <main class="app">
   <section class="header">
     <div>
-      <h1>数学学情反馈助手 4.0</h1>
+      <h1>数学学情反馈助手 V5</h1>
       <p id="todayLine">今天：</p>
       <p>30秒生成一份家长反馈；自动日期、自动复制、学生和知识点记忆、随机语料降低重复。</p>
     </div>
@@ -327,20 +327,20 @@ function makeFeedback(){
 function listTopics(topic){
   const arr=splitText(topic);
   const use=arr.length?arr:["本节课相关数学知识点"];
-  return use.map((x,i)=>(i+1)+". "+x).join("\\n");
+  return use.map((x,i)=>(i+1)+". "+x).join("\n");
 }
 function homeworkList(){
   const reqs=checkedValues("reqBox");
   const map={"完成题单":"完成课后题单","复习笔记":"复习课堂笔记","整理错题":"整理课堂错题","记忆公式":"记忆相关公式","加强练习":"加强对应题型练习"};
   const use=reqs.length?reqs:["完成题单","复习笔记"];
-  return use.map((x,i)=>(i+1)+". "+(map[x]||x)).join("\\n");
+  return use.map((x,i)=>(i+1)+". "+(map[x]||x)).join("\n");
 }
 async function generate(){
   const name=clean($("name").value)||"学生";
   const topic=clean($("topic").value)||"相关数学内容";
   remember("mf_names",name); remember("mf_topics",topic); renderMemory();
   const fb=makeFeedback();
-  const result="科目：数学\\n日期："+todayText()+"\\n姓名："+name+"\\n\\n【主讲内容】\\n"+listTopics(topic)+"\\n\\n【学情反馈】\\n"+fb+"\\n\\n【课后作业】\\n"+homeworkList();
+  const result="科目：数学\n日期："+todayText()+"\n姓名："+name+"\n\n【主讲内容】\n"+listTopics(topic)+"\n\n【学情反馈】\n"+fb+"\n\n【课后作业】\n"+homeworkList();
   $("output").textContent=result;
   $("status").textContent="已生成，反馈正文约"+count(fb)+"字";
   await copyText(true);
