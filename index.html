@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>数学学情反馈助手 4.0</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#f5f5f2;--card:#fff;--text:#222;--muted:#666;--line:#ddd;--dark:#222;--soft:#fafafa;
+}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;
+}
+.app{width:min(1040px,calc(100% - 24px));margin:16px auto 46px}
+.header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}
+h1{font-size:25px;margin:0 0 6px}
+p{margin:0;color:var(--muted);line-height:1.6;font-size:14px}
+.card{background:var(--card);border-radius:16px;padding:18px;margin-bottom:15px;box-shadow:0 8px 22px rgba(0,0,0,.07)}
+.grid{display:grid;gap:12px}
+.two{grid-template-columns:1fr 1fr}
+label{display:block;font-weight:650;font-size:14px;margin:12px 0 6px}
+input,textarea,select{
+  width:100%;border:1px solid #ccc;border-radius:10px;padding:11px 12px;font-size:15px;line-height:1.5;
+  background:#fff;outline:none;
+}
+textarea{min-height:74px;resize:vertical}
+input:focus,textarea:focus,select:focus{border-color:#222}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:8px 11px;
+  background:var(--soft);font-size:14px;cursor:pointer;user-select:none;
+}
+.pill input{width:auto;margin:0}
+.pill:hover{opacity:.86}
+.section-title{font-weight:800;margin:18px 0 10px}
+.keyword-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.keyword-box{border:1px solid var(--line);border-radius:14px;padding:13px;background:#fff}
+.keyword-box h3{font-size:16px;margin:0 0 10px}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.checks label{
+  margin:0;border:1px solid var(--line);border-radius:10px;padding:9px;background:var(--soft);
+  font-weight:400;display:flex;gap:7px;align-items:center;font-size:14px;
+}
+.checks input{width:auto}
+.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.tag{border:1px solid var(--line);background:var(--soft);color:#222;padding:7px 10px;border-radius:999px;font-size:13px;cursor:pointer}
+.tag:hover{opacity:.86}
+.actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+button{border:0;border-radius:10px;background:var(--dark);color:white;padding:12px 18px;font-size:15px;cursor:pointer}
+button.secondary{background:#666}
+button.ghost{background:#fff;color:#222;border:1px solid #ddd}
+button:hover{opacity:.9}
+.result-top{display:flex;justify-content:space-between;gap:12px;align-items:center}
+h2{font-size:20px;margin:0}
+#status{font-size:13px;color:var(--muted)}
+#output{white-space:pre-wrap;
+  margin-top:12px;white-space:pre-wrap;min-height:310px;line-height:1.85;background:var(--soft);
+  border:1px solid var(--line);border-radius:12px;padding:16px;font-size:15px;
+}
+.small{font-size:13px;color:#777;margin-top:8px;line-height:1.6}
+.memory-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}
+.memory-item{font-size:12px;border:1px solid #ddd;background:#fafafa;border-radius:999px;padding:6px 9px;cursor:pointer}
+.memory-item:hover{background:#eee}
+.danger{color:#8a1f1f}
+@media(max-width:760px){
+  .app{width:calc(100% - 20px);margin-top:12px}
+  .header{flex-direction:column}
+  .two,.keyword-wrap,.checks{grid-template-columns:1fr}
+  .card{padding:15px}
+  .actions{flex-direction:column}
+  button{width:100%}
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="header">
+    <div>
+      <h1>数学学情反馈助手 4.0</h1>
+      <p id="todayLine">今天：</p>
+      <p>30秒生成一份家长反馈；自动日期、自动复制、学生和知识点记忆、随机语料降低重复。</p>
+    </div>
+    <button class="ghost" type="button" onclick="clearForm()">清空</button>
+  </section>
+
+  <section class="card">
+    <div class="section-title">课程类型</div>
+    <div class="row">
+      <label class="pill"><input type="radio" name="courseType" value="一对一" checked>一对一</label>
+      <label class="pill"><input type="radio" name="courseType" value="班课">班课</label>
+    </div>
+
+    <div class="grid two">
+      <div>
+        <label for="name">学生姓名</label>
+        <input id="name" placeholder="例如：张修正" autocomplete="off">
+        <div class="small">最近学生</div>
+        <div id="recentNames" class="memory-row"></div>
+      </div>
+      <div>
+        <label for="topic">主讲知识点</label>
+        <input id="topic" placeholder="例如：分布列与二项式" autocomplete="off">
+        <div class="small">最近知识点</div>
+        <div id="recentTopics" class="memory-row"></div>
+      </div>
+    </div>
+
+    <div class="quick">
+      <span class="tag" onclick="addTopic('函数')">函数</span>
+      <span class="tag" onclick="addTopic('导数')">导数</span>
+      <span class="tag" onclick="addTopic('数列')">数列</span>
+      <span class="tag" onclick="addTopic('三角函数')">三角函数</span>
+      <span class="tag" onclick="addTopic('平面向量')">平面向量</span>
+      <span class="tag" onclick="addTopic('立体几何')">立体几何</span>
+      <span class="tag" onclick="addTopic('圆锥曲线')">圆锥曲线</span>
+      <span class="tag" onclick="addTopic('统计与概率')">统计与概率</span>
+      <span class="tag" onclick="addTopic('分布列')">分布列</span>
+      <span class="tag" onclick="addTopic('二项式定理')">二项式定理</span>
+    </div>
+
+    <div class="section-title">学情关键词</div>
+    <div class="keyword-wrap">
+      <div class="keyword-box">
+        <h3>👍 正向表现</h3>
+        <div class="checks" id="goodBox"></div>
+      </div>
+      <div class="keyword-box">
+        <h3>⚠️ 需要提升</h3>
+        <div class="checks" id="badBox"></div>
+      </div>
+    </div>
+
+    <label for="custom">自定义补充（可不填）</label>
+    <textarea id="custom" placeholder="例如：圆锥曲线焦点弦问题不熟练；空间向量运用不熟练"></textarea>
+
+    <div class="section-title">课后要求</div>
+    <div class="checks" id="reqBox"></div>
+
+    <div class="section-title">反馈风格</div>
+    <div class="row">
+      <label class="pill"><input type="radio" name="styleMode" value="普通" checked>普通</label>
+      <label class="pill"><input type="radio" name="styleMode" value="鼓励">鼓励</label>
+      <label class="pill"><input type="radio" name="styleMode" value="严格">严格</label>
+    </div>
+
+    <div class="actions">
+      <button type="button" onclick="generate()">生成反馈并复制</button>
+      <button type="button" class="secondary" onclick="copyText()">再次复制</button>
+      <button type="button" class="ghost" onclick="clearMemory()">清空记忆</button>
+    </div>
+    <div class="small">学生和知识点只保存在你当前浏览器里，不会上传到任何地方。最多各保存50个。</div>
+  </section>
+
+  <section class="card">
+    <div class="result-top">
+      <h2>生成结果</h2>
+      <span id="status"></span>
+    </div>
+    <div id="output"></div>
+  </section>
+</main>
+
+<script>
+const LIMIT=50;
+const goodWords=["掌握较好","状态不错","课堂参与积极","理解能力较强","近期进步明显","学习态度认真","课堂专注度较高","计算准确率较高","作业完成较好","解题思路清晰"];
+const badWords=["基础不扎实","知识点遗忘较多","公式掌握不牢","题型不熟练","计算错误较多","审题不仔细","粗心失分","做题速度较慢","解题步骤不规范","综合应用能力较弱","学习主动性不足","作业完成不及时","课堂专注度一般","在校学习效率有待提升","复习落实不到位"];
+const reqWords=["完成题单","复习笔记","整理错题","记忆公式","加强练习"];
+
+const bank={
+"掌握较好":["对本节课相关知识点掌握较好","课堂练习完成情况较为理想","对于重点内容理解较为到位","相关知识点掌握情况比较稳定","能够较好地跟上课堂内容"],
+"状态不错":["本节课整体状态较好","课堂投入度较高","学习状态较为稳定","能够较好跟随课堂节奏","整体学习状态不错"],
+"课堂参与积极":["课堂参与度较高","能够积极回应课堂提问","课堂互动较为主动","课堂配合度较好","能够主动跟进关键步骤"],
+"理解能力较强":["对于新知识理解较快","能够较快抓住题目关键点","知识接受能力较强","理解思路较为清晰","能够较快建立知识联系"],
+"近期进步明显":["近期学习状态有所提升","相比前期已有明显进步","课堂表现较之前有所改善","解题思路较前期更加清晰","学习效果较前期有所提升"],
+"学习态度认真":["本节课学习态度比较认真","课堂中能够认真完成练习","对待课堂任务较为踏实","学习态度整体较好","能够按要求完成课堂训练"],
+"课堂专注度较高":["课堂专注度较高","注意力保持情况较好","课堂中能够持续跟进讲解","听课状态较为集中","学习投入度较好"],
+"计算准确率较高":["计算准确率较前期有所提升","运算过程整体比较稳定","计算细节处理较为认真","基础运算完成情况较好","计算失误有所减少"],
+"作业完成较好":["作业完成情况较好","课后任务落实较为及时","作业质量整体不错","能够按要求完成课后练习","课后巩固情况较好"],
+"解题思路清晰":["解题思路较为清晰","能够较好梳理题目条件","做题时思路比较明确","能够抓住题目核心方向","分析题目的过程比较顺畅"],
+
+"基础不扎实":["基础知识掌握仍需加强","基础内容存在薄弱环节","部分核心概念理解不够深入","基础知识衔接存在不足","知识体系还不够完善"],
+"知识点遗忘较多":["部分知识点遗忘较明显","对前期内容掌握不够牢固","课堂回顾时发现遗忘较多","部分重点内容需要重新梳理","相关知识点记忆不够扎实"],
+"公式掌握不牢":["相关公式记忆不够扎实","公式运用熟练度不足","部分公式掌握不够牢固","公式应用仍需加强","相关公式需要进一步巩固"],
+"题型不熟练":["对于部分题型掌握不够熟练","典型题解题思路仍需加强","相关题型训练量还需要增加","题型识别能力仍需提升","对于常见题型理解不够深入"],
+"计算错误较多":["计算过程存在一些失误","运算准确率仍需提升","计算细节处理不够严谨","计算过程中容易出现错误","计算习惯有待改善"],
+"审题不仔细":["审题过程中对题目条件关注不够","部分题目未能准确提取关键信息","审题习惯仍需进一步加强","对于题目条件分析不够细致","部分错误来源于条件理解不到位"],
+"粗心失分":["部分失分来源于细节处理不够严谨","做题过程中存在粗心情况","细节把控能力仍需加强","做题时检查意识有待提高","部分题目本可以避免失分"],
+"做题速度较慢":["完成题目的效率仍有提升空间","解题速度相对偏慢","部分题目耗时较长","做题节奏需要进一步优化","解题熟练度仍需加强"],
+"解题步骤不规范":["解题步骤书写还需要更加规范","过程表达不够完整","步骤衔接仍需加强","部分题目存在跳步情况","答题规范性还需要继续提升"],
+"综合应用能力较弱":["知识综合运用能力仍需加强","面对综合题时思路不够清晰","知识迁移能力有待提升","复杂题目分析能力仍需提高","对于知识间联系把握不够充分"],
+"学习主动性不足":["自主学习意识仍需加强","课后主动复习习惯有待培养","学习积极性需要进一步提高","主动思考和总结意识不足","课后落实情况需要更加主动"],
+"作业完成不及时":["课后任务落实不够及时","作业完成情况仍需加强","部分练习未按要求完成","课后学习执行力有待提高","课后巩固落实仍需加强"],
+"课堂专注度一般":["课堂专注度仍需进一步提升","课堂投入程度有待加强","注意力持续时间相对有限","课堂状态存在波动","部分时间段专注度不足"],
+"在校学习效率有待提升":["在校学习效率还有提升空间","校内知识吸收情况需要加强","日常学习效率有待提高","课堂外的巩固落实还需要重视","平时学习的连续性需要加强"],
+"复习落实不到位":["课后复习落实还不够充分","复习频率需要进一步提高","对课堂内容的回顾不够及时","知识点容易因为复习不足而遗忘","课后巩固习惯仍需加强"]
+};
+
+const measureBank=[
+"本节课针对课堂中暴露出的问题进行了知识点梳理和典型题训练",
+"课堂中先带领孩子回顾核心概念，再结合代表性题目进行巩固",
+"本节课围绕重点题型进行了针对性讲解，并及时纠正易错点",
+"课堂上通过例题讲解和配套练习，帮助孩子进一步查漏补缺",
+"本节课重点梳理了相关方法，并结合练习帮助孩子落实到具体题目中",
+"课堂中针对薄弱环节进行了补充训练，帮助孩子重新建立知识联系"
+];
+
+const classMeasureBank=[
+"本节班课主要围绕重点知识点讲解与配套练习展开",
+"课堂中结合典型题目带领学生梳理方法，并安排了对应练习",
+"本节班课在讲解核心内容后，重点通过题目训练帮助学生巩固",
+"课堂上围绕常见题型进行了讲解和练习，帮助学生熟悉解题思路"
+];
+
+const reqBank={
+"完成题单":["按要求完成课后题单","及时完成对应练习","通过课后题单进一步巩固内容","认真落实课后练习任务"],
+"复习笔记":["及时复习课堂笔记","结合课堂笔记进行回顾","课后多翻看本节重点内容","及时整理并复习课堂内容"],
+"整理错题":["及时整理错题","对课堂错题进行复盘","总结错题原因","把易错题重新回顾一遍"],
+"记忆公式":["加强相关公式记忆","及时巩固本节涉及的公式","把重要公式重新梳理记忆","注意公式的理解和运用"],
+"加强练习":["加强相关题型练习","通过练习提升熟练度","继续巩固本节重点题型","保持一定练习量，稳定掌握程度"]
+};
+
+function $(id){return document.getElementById(id)}
+function todayText(){const d=new Date();return (d.getMonth()+1)+"月"+d.getDate()+"日"}
+function selectedRadio(name){return document.querySelector('input[name="'+name+'"]:checked').value}
+function clean(s){return (s||"").trim().replace(/[。.]$/,"")}
+function splitText(s){return clean(s).split(/[\n；;、,，]+/).map(x=>x.trim()).filter(Boolean)}
+function count(s){return (s||"").replace(/\s/g,"").length}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
+function pickFor(k){return pick(bank[k]||[k])}
+function checkedValues(boxId){return Array.from($(boxId).querySelectorAll("input:checked")).map(x=>x.value)}
+function renderChecks(){
+  $("goodBox").innerHTML=goodWords.map(w=>'<label><input type="checkbox" value="'+w+'">'+w+'</label>').join("");
+  $("badBox").innerHTML=badWords.map(w=>'<label><input type="checkbox" value="'+w+'">'+w+'</label>').join("");
+  $("reqBox").innerHTML=reqWords.map(w=>'<label><input type="checkbox" value="'+w+'">'+w+'</label>').join("");
+}
+function addTopic(t){
+  const cur=$("topic").value.trim();
+  if(!cur){$("topic").value=t;return}
+  const arr=splitText(cur);
+  if(!arr.includes(t)) $("topic").value=cur+"；"+t;
+}
+function getList(key){try{return JSON.parse(localStorage.getItem(key)||"[]")}catch(e){return []}}
+function setList(key,arr){localStorage.setItem(key,JSON.stringify(arr.slice(0,LIMIT)))}
+function remember(key,val){
+  val=clean(val); if(!val)return;
+  let arr=getList(key).filter(x=>x!==val);
+  arr.unshift(val); setList(key,arr);
+}
+function renderMemory(){
+  $("recentNames").innerHTML=getList("mf_names").slice(0,12).map(x=>'<span class="memory-item" onclick="fillName(\''+escapeQuote(x)+'\')">'+x+'</span>').join("");
+  $("recentTopics").innerHTML=getList("mf_topics").slice(0,12).map(x=>'<span class="memory-item" onclick="fillTopic(\''+escapeQuote(x)+'\')">'+x+'</span>').join("");
+}
+function escapeQuote(s){return s.replace(/\\/g,"\\\\").replace(/'/g,"\\'")}
+function fillName(v){$("name").value=v}
+function fillTopic(v){$("topic").value=v}
+
+function buildGoodSentence(goods,style){
+  if(!goods.length)return "";
+  const picked=goods.slice(0,3).map(pickFor);
+  if(style==="鼓励") return "课堂中可以看到，孩子"+picked.join("，")+"，整体学习状态值得肯定。";
+  if(style==="严格") return "课堂中孩子"+picked.join("，")+"，这部分需要继续保持，不能因为短期状态较好而放松课后巩固。";
+  return "课堂中孩子"+picked.join("，")+"，整体表现较为稳定。";
+}
+function buildBadSentence(bads,style){
+  if(!bads.length)return "";
+  const picked=bads.slice(0,4).map(pickFor);
+  if(style==="鼓励") return "同时也发现"+picked.join("，")+"，经过课堂梳理后已有一定改善，后续继续巩固即可。";
+  if(style==="严格") return "但课堂中也暴露出"+picked.join("，")+"，如果课后不及时复习，后续学习容易受到影响。";
+  return "课堂中也发现"+picked.join("，")+"，后续仍需要通过练习继续巩固。";
+}
+function buildReqSentence(reqs,style){
+  const use=reqs.length?reqs:["完成题单","复习笔记"];
+  const picked=use.slice(0,4).map(r=>pick(reqBank[r]||[r]));
+  if(style==="严格") return "课后需要"+picked.join("，")+"，把课堂中暴露的问题真正落实到练习和订正中。";
+  if(style==="鼓励") return "课后建议"+picked.join("，")+"，继续保持复习节奏，相关内容会更加稳定。";
+  return "后续建议课后"+picked.join("，")+"，多回顾多巩固。";
+}
+function expandToTarget(text,style,type){
+  if(count(text)>=180)return text;
+  if(type==="班课"){
+    text+="这部分内容在考试中经常与基础概念和题型应用结合考查，课后需要及时复盘课堂内容，避免只听懂但不会独立完成。";
+  }else{
+    text+="这部分内容在考试中通常会和基础概念、公式运用以及题型识别结合考查，对细心程度和熟练度都有一定要求。";
+  }
+  if(count(text)>=180)return text;
+  if(style==="鼓励") text+="后续只要把课堂笔记和题单落实到位，相关知识点会逐步稳定下来。";
+  else if(style==="严格") text+="接下来需要提高课后复习质量，不能只停留在课堂听懂，要落实到独立做题。";
+  else text+="后面课堂中也会继续结合相关题型进行检查和巩固，帮助孩子提高独立解题能力。";
+  return text;
+}
+function trimText(text,topic,style,type,reqs){
+  if(count(text)<=245)return text;
+  const base= type==="班课" ? 
+    "本节班课围绕"+topic+"相关内容展开讲解与练习。" :
+    "本节课围绕"+topic+"相关内容展开复习与巩固。";
+  let t=base+"课堂中结合实际完成情况进行了知识点梳理和典型题训练，帮助进一步熟悉方法和题型。"+buildReqSentence(reqs,style);
+  return expandToTarget(t,style,type);
+}
+function makeFeedback(){
+  const type=selectedRadio("courseType");
+  const style=selectedRadio("styleMode");
+  const topic=clean($("topic").value)||"相关数学内容";
+  const goods=checkedValues("goodBox");
+  const bads=checkedValues("badBox");
+  const reqs=checkedValues("reqBox");
+  const custom=clean($("custom").value);
+  let text="";
+  if(type==="班课"){
+    text+="本节班课围绕"+topic+"相关内容展开讲解与练习。";
+    text+=goods.length?buildGoodSentence(goods,style):"课堂整体秩序较为稳定，大部分同学能够跟随课堂节奏完成练习。";
+    text+=bads.length?buildBadSentence(bads,style):"课堂中结合练习情况对重点内容进行了巩固。";
+    text+=pick(classMeasureBank)+"。";
+  }else{
+    text+="本节课围绕"+topic+"相关内容展开复习与巩固。";
+    text+=goods.length?buildGoodSentence(goods,style):"课堂中根据孩子的实际掌握情况进行了查漏补缺。";
+    text+=bads.length?buildBadSentence(bads,style):"整体能够跟随课堂节奏完成基本练习。";
+    text+=pick(measureBank)+"。";
+  }
+  if(custom) text+="另外，"+custom+"。";
+  text+=buildReqSentence(reqs,style);
+  text=expandToTarget(text,style,type);
+  text=trimText(text,topic,style,type,reqs);
+  return text;
+}
+function listTopics(topic){
+  const arr=splitText(topic);
+  const use=arr.length?arr:["本节课相关数学知识点"];
+  return use.map((x,i)=>(i+1)+". "+x).join("\\n");
+}
+function homeworkList(){
+  const reqs=checkedValues("reqBox");
+  const map={"完成题单":"完成课后题单","复习笔记":"复习课堂笔记","整理错题":"整理课堂错题","记忆公式":"记忆相关公式","加强练习":"加强对应题型练习"};
+  const use=reqs.length?reqs:["完成题单","复习笔记"];
+  return use.map((x,i)=>(i+1)+". "+(map[x]||x)).join("\\n");
+}
+async function generate(){
+  const name=clean($("name").value)||"学生";
+  const topic=clean($("topic").value)||"相关数学内容";
+  remember("mf_names",name); remember("mf_topics",topic); renderMemory();
+  const fb=makeFeedback();
+  const result="科目：数学\\n日期："+todayText()+"\\n姓名："+name+"\\n\\n【主讲内容】\\n"+listTopics(topic)+"\\n\\n【学情反馈】\\n"+fb+"\\n\\n【课后作业】\\n"+homeworkList();
+  $("output").textContent=result;
+  $("status").textContent="已生成，反馈正文约"+count(fb)+"字";
+  await copyText(true);
+}
+async function copyText(silent){
+  const text=$("output").textContent||"";
+  if(!text.trim()){ $("status").textContent="请先生成反馈"; return; }
+  try{
+    await navigator.clipboard.writeText(text);
+    $("status").textContent=silent?$("status").textContent+"，已复制到剪贴板":"已复制到剪贴板";
+  }catch(e){
+    const t=document.createElement("textarea"); t.value=text; document.body.appendChild(t); t.select();
+    try{document.execCommand("copy");$("status").textContent="已复制到剪贴板"}catch(err){$("status").textContent="复制失败，请手动复制"}
+    document.body.removeChild(t);
+  }
+}
+function clearForm(){
+  ["name","topic","custom"].forEach(id=>$(id).value="");
+  document.querySelectorAll("input[type=checkbox]").forEach(x=>x.checked=false);
+  document.querySelector('input[name="courseType"][value="一对一"]').checked=true;
+  document.querySelector('input[name="styleMode"][value="普通"]').checked=true;
+  $("output").textContent=""; $("status").textContent="";
+}
+function clearMemory(){
+  if(confirm("确定清空最近学生和最近知识点吗？")){
+    localStorage.removeItem("mf_names"); localStorage.removeItem("mf_topics"); renderMemory();
+  }
+}
+document.addEventListener("DOMContentLoaded",()=>{
+  $("todayLine").textContent="今天："+todayText();
+  renderChecks(); renderMemory();
+});
+</script>
+</body>
+</html>
